@@ -1,50 +1,48 @@
 import java.io.*;
-import java.util.*;
+import java.util.Scanner;
 
 public class SudokuSolver {
-    private static final int SIZE = 9;
+    static final int SIZE = 9; // Sudoku grid size
 
     public static void main(String[] args) {
         int[][] board = new int[SIZE][SIZE];
 
         // Read Sudoku from input file
-        try (Scanner sc = new Scanner(new File("input.txt"))) {
+        try (Scanner scanner = new Scanner(new File("test_cases/easy_input.txt"))) {
             for (int i = 0; i < SIZE; i++) {
                 for (int j = 0; j < SIZE; j++) {
-                    if (sc.hasNextInt()) {
-                        board[i][j] = sc.nextInt();
+                    if (scanner.hasNextInt()) {
+                        board[i][j] = scanner.nextInt();
                     }
                 }
             }
         } catch (FileNotFoundException e) {
-            System.out.println("Error: input.txt not found.");
+            System.out.println("Error: Input file not found!");
             return;
         }
 
-        System.out.println("Original Sudoku Board:");
-        printBoard(board);
-
+        // Solve Sudoku
         if (solveSudoku(board)) {
-            System.out.println("\nSolved Sudoku Board:");
-            printBoard(board);
-            saveSolution(board);
+            writeSolutionToFile(board, "test_cases/easy_output.txt");
         } else {
-            System.out.println("\nNo solution exists.");
+            try (PrintWriter writer = new PrintWriter(new File("test_cases/easy_output.txt"))) {
+                writer.println("No solution exists.");
+            } catch (IOException e) {
+                System.out.println("Error writing output file!");
+            }
         }
     }
 
-    // Backtracking Algorithm
+    // Backtracking solver
     private static boolean solveSudoku(int[][] board) {
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
-                if (board[row][col] == 0) {  // Empty cell found
-                    for (int num = 1; num <= SIZE; num++) {
+                if (board[row][col] == 0) { // Empty cell
+                    for (int num = 1; num <= 9; num++) {
                         if (isValid(board, row, col, num)) {
                             board[row][col] = num;
-                            if (solveSudoku(board)) {
-                                return true; // Success
-                            }
-                            board[row][col] = 0; // Backtrack
+                            if (solveSudoku(board)) return true;
+                            board[row][col] = 0; // Undo move
                         }
                     }
                     return false; // No valid number found
@@ -54,10 +52,10 @@ public class SudokuSolver {
         return true; // Solved
     }
 
-    // Check if number placement is valid
+    // Check if a number can be placed
     private static boolean isValid(int[][] board, int row, int col, int num) {
         for (int i = 0; i < SIZE; i++) {
-            if (board[row][i] == num || board[i][col] == num || 
+            if (board[row][i] == num || board[i][col] == num ||
                 board[row - row % 3 + i / 3][col - col % 3 + i % 3] == num) {
                 return false;
             }
@@ -65,26 +63,17 @@ public class SudokuSolver {
         return true;
     }
 
-    private static void printBoard(int[][] board) {
-        for (int[] row : board) {
-            for (int num : row) {
-                System.out.print(num + " ");
-            }
-            System.out.println();
-        }
-    }
-
-    // Save solution to output.txt
-    private static void saveSolution(int[][] board) {
-        try (PrintWriter writer = new PrintWriter("output.txt")) {
-            for (int[] row : board) {
-                for (int num : row) {
-                    writer.print(num + " ");
+    // Write solution to file
+    private static void writeSolutionToFile(int[][] board, String filename) {
+        try (PrintWriter writer = new PrintWriter(new File(filename))) {
+            for (int i = 0; i < SIZE; i++) {
+                for (int j = 0; j < SIZE; j++) {
+                    writer.print(board[i][j] + " ");
                 }
                 writer.println();
             }
         } catch (IOException e) {
-            System.out.println("Error writing to output.txt");
+            System.out.println("Error writing output file!");
         }
     }
 }
