@@ -1,112 +1,90 @@
-class Sudoku 
-{
-    public static boolean isSafe(int[][] board, int row, int col, int num)
-    {
-        for (int i=0; i<board.length; i++)
-        {
-            //Check if the input number is already present in that row, return false;
-            if (board[row][i] == num){
-                return false;
+import java.io.*;
+import java.util.*;
+
+public class SudokuSolver {
+    private static final int SIZE = 9;
+
+    public static void main(String[] args) {
+        int[][] board = new int[SIZE][SIZE];
+
+        // Read Sudoku from input file
+        try (Scanner sc = new Scanner(new File("input.txt"))) {
+            for (int i = 0; i < SIZE; i++) {
+                for (int j = 0; j < SIZE; j++) {
+                    if (sc.hasNextInt()) {
+                        board[i][j] = sc.nextInt();
+                    }
+                }
             }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error: input.txt not found.");
+            return;
         }
 
-        //Column has unique number
-        for (int j=0; j<board.length; j++){
-            //Check if the input number is already present in that column, return false;
-            if (board [j][col]== num){
-                return false;
-            }
+        System.out.println("Original Sudoku Board:");
+        printBoard(board);
+
+        if (solveSudoku(board)) {
+            System.out.println("\nSolved Sudoku Board:");
+            printBoard(board);
+            saveSolution(board);
+        } else {
+            System.out.println("\nNo solution exists.");
         }
+    }
 
-        //Corresponding square has unique number
-        int sqrt = (int)Math.sqrt(board.length);
-        int boxRowStart = row - row % sqrt;
-        int boxColStart = col - col % sqrt;
-
-        for (int r= boxRowStart; r < boxRowStart + sqrt; r++){
-            for (int d= boxColStart; d < boxColStart + sqrt; d++){
-                if (board[r][d]== num){
-                    return false;
+    // Backtracking Algorithm
+    private static boolean solveSudoku(int[][] board) {
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (board[row][col] == 0) {  // Empty cell found
+                    for (int num = 1; num <= SIZE; num++) {
+                        if (isValid(board, row, col, num)) {
+                            board[row][col] = num;
+                            if (solveSudoku(board)) {
+                                return true; // Success
+                            }
+                            board[row][col] = 0; // Backtrack
+                        }
+                    }
+                    return false; // No valid number found
                 }
             }
         }
+        return true; // Solved
+    }
 
-        // if there is no clash, it's safe
+    // Check if number placement is valid
+    private static boolean isValid(int[][] board, int row, int col, int num) {
+        for (int i = 0; i < SIZE; i++) {
+            if (board[row][i] == num || board[i][col] == num || 
+                board[row - row % 3 + i / 3][col - col % 3 + i % 3] == num) {
+                return false;
+            }
+        }
         return true;
     }
 
-    public static boolean solveSudoku( int [][] board, int n){
-        int row = -1;
-        int col = -1;
-        boolean isEmpty = true;
-        for (int i=0; i< n; i++){
-            for (int j = 0; j < n; j++){
-                if (board[i][j] == 0){
-                    row = i;
-                    col = j;
-
-                  // If still some remaining missing values in Sudoku
-                  isEmpty = false;
-                  break;  
-                }
+    private static void printBoard(int[][] board) {
+        for (int[] row : board) {
+            for (int num : row) {
+                System.out.print(num + " ");
             }
-            if (!isEmpty){
-                break;
-            }
-        }
-        //No empty space left
-        if(isEmpty){
-            return true;
-        }
-        //Else for each-row backtrack
-        for(int num = 1; num <=n; num++){
-            if (isSafe(board, row, col, num)){
-                board[row][col] = num;
-                if (solveSudoku(board,n)){
-                    return true;
-                }
-                else {
-                    //replace it
-                    board[row][col]= 0;
-                }
-            }
-        }
-        return false;
-    }
-    public static void print(int [][] board, int N){
-        //print the answer
-        for(int r=0; r<N ; r++){
-            for(int d=0; d<N; d++){
-                System.out.print(board [r][d]);
-                System.out.print(" ");
-            }
-            System.out.print("\n");
-
-            if ((r+1)%(int)Math.sqrt(N) == 0){
-                System.out.print("");
-            }
+            System.out.println();
         }
     }
 
-    public static void main(String args[]){
-        int [][] board = new int [][]{
-            { 3, 0, 6, 5, 0, 8, 4, 0, 0 },
-            { 5, 2, 0, 0, 0, 0, 0, 0, 0 },
-            { 0, 8, 7, 0, 0, 0, 0, 3, 1 },
-            { 0, 0, 3, 0, 1, 0, 0, 8, 0 },
-            { 9, 0, 0, 8, 6, 3, 0, 0, 5 },
-            { 0, 5, 0, 0, 9, 0, 6, 0, 0 },
-            { 1, 3, 0, 0, 0, 0, 2, 5, 0 },
-            { 0, 0, 0, 0, 0, 0, 0, 7, 4 },
-            { 0, 0, 5, 2, 0, 6, 3, 0, 0 }
-        };
-        int N = board.length;
-
-        if (solveSudoku(board, N)){
-            print(board, N);
-        }
-        else {
-            System.out.println("No solution");
+    // Save solution to output.txt
+    private static void saveSolution(int[][] board) {
+        try (PrintWriter writer = new PrintWriter("output.txt")) {
+            for (int[] row : board) {
+                for (int num : row) {
+                    writer.print(num + " ");
+                }
+                writer.println();
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing to output.txt");
         }
     }
 }
